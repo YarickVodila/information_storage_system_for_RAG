@@ -1,0 +1,8 @@
+transformers==4.48.3 
+huggingface_hub==0.25.2
+sentence_transformers==2.2.2
+uvicorn==0.34.0
+torch==2.6.0
+python-multipart==0.0.20
+fastapi==0.115.12
+numpy==2.2.4
