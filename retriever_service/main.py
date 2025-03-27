@@ -1,14 +1,10 @@
 from apps.retriever import Retriever
 
 from typing import List
-import datetime
 from pydantic import BaseModel
 
-from fastapi import FastAPI, Depends, HTTPException
-from fastapi.security import  HTTPBearer
-from pymilvus import MilvusClient
+from fastapi import FastAPI, HTTPException
 import uvicorn
-# from requests import request
 import logging
 
 
@@ -22,8 +18,17 @@ app = FastAPI()
 class EmbeddingResponse(BaseModel):
     embeddings: List[List[float]]
 
-@app.post("/get_embeddings", response_model=EmbeddingResponse)
-async def get_embeddings(texts: list[str], is_query: bool = True):
+class TextRequest(BaseModel):
+    texts: List[str]
+    is_query: bool = True
+
+
+@app.post("/create_embeddings", response_model=EmbeddingResponse)
+async def create_embeddings(request: TextRequest): # texts: list[str], is_query: bool = True
+    texts = request.texts
+    is_query = request.is_query
+
+    print("Количество текстов: ",len(texts))
     try:
         if not texts:
             raise HTTPException(status_code=400, detail="Получен пустой список текстов")
@@ -44,4 +49,4 @@ async def get_embeddings_dims():
 
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host='0.0.0.0', port=8000, log_level='info', reload=True) # , log_level='info', reload=True
+    uvicorn.run("main:app", port=8000, log_level='info', reload=True) # , log_level='info', reload=True
