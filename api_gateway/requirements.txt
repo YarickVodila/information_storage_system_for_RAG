@@ -1,0 +1,6 @@
+uvicorn==0.34.0
+python-multipart==0.0.20
+fastapi==0.115.12
+numpy==2.2.4
+langchain-community==0.3.20
+pypdf==5.4.0
