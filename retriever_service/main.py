@@ -49,4 +49,4 @@ async def get_embeddings_dims():
 
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", port=8000, log_level='info', reload=True) # , log_level='info', reload=True
+    uvicorn.run("main:app", port=8000, log_level='info') # , log_level='info', reload=True
