@@ -1,0 +1,20 @@
+services:
+  retriever_service:
+    build:
+      dockerfile: ./retriever_service/Dockerfile
+    container_name: retriever_service
+    ports:
+      - "8000:8000"
+
+  api_gateway:
+    build:
+      dockerfile: ./api_gateway/Dockerfile
+    container_name: api_gateway
+    ports:
+      - "8001:8001"
+    depends_on:
+      - retriever_service
+
+networks:
+  backend:
+

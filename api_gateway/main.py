@@ -25,11 +25,27 @@ app = FastAPI()
 milvus_client = MilvusClient(DATABASE_SERVICE_URL)
 
 class SearchItem(BaseModel):
+    """ 
+    Represents a single search result item.
+
+    Fields:
+        id (int): Unique identifier of the document
+        distance (float): Similarity score between query and document
+        entity (dict): Contains the document text and other fields
+    """
     id: int
     distance: float
     entity: dict
 
 class SearchRequest(BaseModel):
+    """ 
+    Request model for search endpoint.
+
+    Fields:
+        collection_name (str): Name of the collection to search in
+        query (str): Search query text
+        top_k (int, optional): Number of results to return (default: 3)
+    """
     collection_name: str
     query: str
     top_k: int = 3
@@ -37,6 +53,19 @@ class SearchRequest(BaseModel):
 
 @app.post("/create_collection")
 async def create_collection(collection_name:str, metric_type:str = "COSINE"):
+    """ 
+    Creates a new Milvus collection for vector storage.
+
+    Args:
+        collection_name (str): Name of the collection to create
+        metric_type (str, optional): Similarity metric type ("COSINE", "L2", etc.). Default: "COSINE". More https://milvus.io/docs/ru/metric.md
+
+    Returns:
+        dict: Status message
+
+    Raises:
+        HTTPException(500): If collection creation fails
+    """
     try:
         async with httpx.AsyncClient() as client:
             response = await client.get(f"{RETRIEVER_SERVICE_URL}/get_embeddings_dims")
@@ -103,6 +132,20 @@ async def create_collection(collection_name:str, metric_type:str = "COSINE"):
 
 @app.post("/drop_collection")
 async def drop_collection(collection_name:str):
+    """ 
+    Deletes an existing Milvus collection.
+
+    Args:
+        collection_name (str): Name of the collection to delete
+
+    Returns:
+        dict: Status message
+
+    Raises:
+        HTTPException(400): If collection doesn't exist
+        HTTPException(500): If deletion fails
+    
+    """
     try:
         if milvus_client.has_collection(collection_name=collection_name):
             milvus_client.drop_collection(collection_name=collection_name)
@@ -122,7 +165,20 @@ async def drop_collection(collection_name:str):
 
 @app.post("/insert_data_collection")
 async def insert_data_collection(collection_name:str, file: UploadFile = File(...)):
+    """ 
+    Processes a PDF file and inserts its contents into a collection.
 
+    Args:
+        collection_name (str): Target collection name
+        file (UploadFile): PDF file to process
+
+    Returns:
+        dict: Status message
+
+    Raises:
+        HTTPException(400): For non-PDF files or missing collection
+        HTTPException(500): For processing errors
+    """
     if not file.filename.lower().endswith('.pdf'):
         raise HTTPException(
             status_code=400, 
@@ -165,16 +221,16 @@ async def insert_data_collection(collection_name:str, file: UploadFile = File(..
 
             documents = [doc.page_content for doc in documents]
 
-            
-
             print("Количество документов", len(documents))
 
             # Получаем эмбеддинги документов
-            async with httpx.AsyncClient() as client:
+            async with httpx.AsyncClient(timeout=httpx.Timeout(300.0)) as client:
                 response = await client.post(
                     url = f"{RETRIEVER_SERVICE_URL}/create_embeddings",
                     json={"texts": documents, "is_query": False}
                 )
+
+            # print(response.status_code)
 
             if response.status_code == 200:
                 embeddings = response.json()
@@ -210,7 +266,20 @@ async def insert_data_collection(collection_name:str, file: UploadFile = File(..
 
 @app.post("/search", response_model=List[SearchItem])
 async def search(request: SearchRequest):
+    """ 
+    Performs semantic search on a collection.
 
+    Args:
+        request (SearchRequest): Contains collection name, query, and top_k
+
+    Returns:
+        List[SearchItem]: Search results with scores and text
+
+    Raises:
+        HTTPException(400): If collection doesn't exist
+        HTTPException(500): For search errors
+    
+    """
     collection_name = request.collection_name
     query = request.query
     top_k = request.top_k
