@@ -52,7 +52,7 @@ docker compose -f docker-compose_app.yml up --build
 
 Для Fine-Tuning retrivera использовался метод [SimCSE](https://sbert.net/examples/sentence_transformer/unsupervised_learning/SimCSE/README.html "SimCSE")
 
-![SimCSE](img\image.png)
+![SimCSE](img/image.png)
 
 > [!note]
 > Пример дообучения находится в файле `train_retriver.ipynb` 
